@@ -12,25 +12,37 @@ pipeline {
         stage('Run Backend Containers') {
             steps {
                 sh '''
-                docker rm -f backend1 backend2 nginx || true
+                # Remove old containers if they exist
+                docker rm -f backend1 backend2 || true
 
-                docker run -d --name backend1 backend-app
-                docker run -d --name backend2 backend-app
+                # Run backend containers
+                docker run -d --name backend1 -p 5001:5000 backend-app
+                docker run -d --name backend2 -p 5002:5000 backend-app
                 '''
+            }
+        }
+
+        stage('Build Custom NGINX Image') {
+            steps {
+                sh 'docker build -t nginx-lb ./nginx'
             }
         }
 
         stage('Run NGINX Load Balancer') {
             steps {
                 sh '''
+                # Remove old NGINX container if it exists
+                docker rm -f nginx || true
+
+                # Run NGINX load balancer
                 docker run -d --name nginx \
-                --link backend1 \
-                --link backend2 \
-                -p 8081:80 \
-                -v $(pwd)/nginx/nginx.conf:/etc/nginx/nginx.conf \
-                nginx
+                    --link backend1 \
+                    --link backend2 \
+                    -p 8081:80 \
+                    nginx-lb
                 '''
             }
         }
     }
 }
+
