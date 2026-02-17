@@ -18,6 +18,7 @@ pipeline {
                 # Run backend containers
                 docker run -d --name backend1 -p 5001:5000 backend-app
                 docker run -d --name backend2 -p 5002:5000 backend-app
+		sleep 3
                 '''
             }
         }
